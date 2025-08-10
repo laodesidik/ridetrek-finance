@@ -11,6 +11,7 @@ import { id } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { CheckCircle, Circle, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { DatabaseService } from '@/services/database';
 
 const TransactionHistory = () => {
   // Data pengguna awal (6 orang)
@@ -23,15 +24,28 @@ const TransactionHistory = () => {
     { id: '6', name: 'Jerry', color: '#ec4899' },
   ];
 
-  const [expenses, setExpenses] = useState<Expense[]>(() => {
-    const savedExpenses = localStorage.getItem('expenses');
-    return savedExpenses ? JSON.parse(savedExpenses) : [];
-  });
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Simpan ke localStorage setiap kali expenses berubah
+  // Fetch expenses from database on component mount
   useEffect(() => {
-    localStorage.setItem('expenses', JSON.stringify(expenses));
-  }, [expenses]);
+    const fetchExpenses = async () => {
+      try {
+        const fetchedExpenses = await DatabaseService.fetchTransactions();
+        setExpenses(fetchedExpenses);
+        setError(null);
+      } catch (error) {
+        console.error('Error fetching expenses:', error);
+        setError('Gagal memuat data transaksi');
+        toast.error('Gagal memuat data transaksi');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExpenses();
+  }, []);
 
   const getUserById = (id: string) => users.find(user => user.id === id);
   
@@ -46,57 +60,62 @@ const TransactionHistory = () => {
     return acc;
   }, {} as Record<string, number>);
 
-  const handlePaymentToggle = (expenseId: string, userId: string, paid: boolean) => {
-    setExpenses(prev => prev.map(expense => {
-      if (expense.id === expenseId) {
-        const updatedExpense = { ...expense };
+  const handlePaymentToggle = async (expenseId: string, userId: string, paid: boolean) => {
+    try {
+      const updatedExpense = await DatabaseService.updatePaymentStatus(
+        expenseId,
+        userId,
+        paid
+      );
+      
+      if (updatedExpense) {
+        setExpenses(prev => 
+          prev.map(expense => 
+            expense.id === expenseId ? updatedExpense : expense
+          )
+        );
         
-        // Inisialisasi paymentStatus jika belum ada
-        if (!updatedExpense.paymentStatus) {
-          updatedExpense.paymentStatus = {};
+        if (paid) {
+          toast.success('Status pembayaran diperbarui menjadi lunas');
         }
-        
-        // Update status pembayaran
-        updatedExpense.paymentStatus[userId] = {
-          paid,
-          partialAmount: paid ? undefined : updatedExpense.paymentStatus[userId]?.partialAmount
-        };
-        
-        return updatedExpense;
       }
-      return expense;
-    }));
-    
-    if (paid) {
-      toast.success('Status pembayaran diperbarui menjadi lunas');
+    } catch (error) {
+      console.error('Error updating payment status:', error);
+      toast.error('Gagal memperbarui status pembayaran');
     }
   };
 
-  const handlePartialPayment = (expenseId: string, userId: string, amount: number) => {
-    setExpenses(prev => prev.map(expense => {
-      if (expense.id === expenseId) {
-        const updatedExpense = { ...expense };
-        
-        // Inisialisasi paymentStatus jika belum ada
-        if (!updatedExpense.paymentStatus) {
-          updatedExpense.paymentStatus = {};
-        }
-        
-        // Update jumlah pembayaran sebagian
-        updatedExpense.paymentStatus[userId] = {
-          paid: false,
-          partialAmount: Math.round(amount)
-        };
-        
-        return updatedExpense;
+  const handlePartialPayment = async (expenseId: string, userId: string, amount: number) => {
+    try {
+      const updatedExpense = await DatabaseService.updatePaymentStatus(
+        expenseId,
+        userId,
+        false,
+        Math.round(amount)
+      );
+      
+      if (updatedExpense) {
+        setExpenses(prev => 
+          prev.map(expense => 
+            expense.id === expenseId ? updatedExpense : expense
+          )
+        );
       }
-      return expense;
-    }));
+    } catch (error) {
+      console.error('Error updating partial payment:', error);
+      toast.error('Gagal memperbarui pembayaran sebagian');
+    }
   };
 
-  const handleDeleteExpense = (id: string) => {
-    setExpenses(prev => prev.filter(expense => expense.id !== id));
-    toast.success('Transaksi berhasil dihapus');
+  const handleDeleteExpense = async (id: string) => {
+    try {
+      await DatabaseService.deleteTransaction(id);
+      setExpenses(prev => prev.filter(expense => expense.id !== id));
+      toast.success('Transaksi berhasil dihapus');
+    } catch (error) {
+      console.error('Error deleting expense:', error);
+      toast.error('Gagal menghapus transaksi');
+    }
   };
 
   return (
@@ -113,159 +132,172 @@ const TransactionHistory = () => {
           </div>
         </div>
         
-        {/* Ringkasan Pengeluaran per Kategori */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Pengeluaran per Kategori</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {Object.entries(categoryTotals).map(([category, amount]) => (
-                <div key={category} className="flex justify-between">
-                  <span>{category}</span>
-                  <span className="font-medium">
-                    {Math.round(amount).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                  </span>
+        {loading ? (
+          <div className="flex justify-center items-center h-32">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <span className="ml-2">Memuat data...</span>
+          </div>
+        ) : error ? (
+          <div className="flex justify-center items-center h-32">
+            <span className="text-red-500">{error}</span>
+          </div>
+        ) : (
+          <>
+            {/* Ringkasan Pengeluaran per Kategori */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Pengeluaran per Kategori</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {Object.entries(categoryTotals).map(([category, amount]) => (
+                    <div key={category} className="flex justify-between">
+                      <span>{category}</span>
+                      <span className="font-medium">
+                        {Math.round(amount).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-        
-        <div className="space-y-6">
-          {sortedExpenses.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8">
-                <p className="text-muted-foreground">Belum ada transaksi yang dicatat</p>
               </CardContent>
             </Card>
-          ) : (
-            sortedExpenses.map(expense => {
-              const payer = getUserById(expense.paidBy);
-              
-              return (
-                <Card key={expense.id} className="overflow-hidden relative">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute top-2 right-2 h-8 w-8 p-0"
-                    onClick={() => handleDeleteExpense(expense.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                  
-                  <CardHeader className="bg-gray-50">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg">{expense.description}</CardTitle>
-                        <div className="flex items-center space-x-2 mt-1">
-                          <Badge variant="secondary">{expense.category}</Badge>
-                          <span className="text-sm text-muted-foreground">
-                            {format(new Date(expense.date), 'dd MMM yyyy', { locale: id })}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-lg">
-                          {Math.round(expense.amount).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Dibayar oleh {payer?.name}
-                        </p>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  
-                  <CardContent className="pt-4">
-                    <div className="space-y-4">
-                      <h3 className="font-medium">Status Pembayaran:</h3>
-                      
-                      <div className="space-y-3">
-                        {expense.splits.map(split => {
-                          const user = getUserById(split.userId);
-                          if (!user) return null;
-                          
-                          const paymentStatus = expense.paymentStatus?.[split.userId] || { paid: false };
-                          const isFullyPaid = paymentStatus.paid;
-                          const partialAmount = paymentStatus.partialAmount || 0;
-                          
-                          return (
-                            <div key={`${expense.id}-${split.userId}`} className="flex items-center justify-between p-3 border rounded-lg">
-                              <div className="flex items-center space-x-3">
-                                <div 
-                                  className="w-3 h-3 rounded-full" 
-                                  style={{ backgroundColor: user.color }}
-                                ></div>
-                                <span className="font-medium">{user.name}</span>
-                                <span className="text-sm text-muted-foreground">
-                                  ({Math.round(split.amount).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })})
-                                </span>
-                              </div>
-                              
-                              <div className="flex items-center space-x-4">
-                                {isFullyPaid ? (
-                                  <div className="flex items-center text-green-600">
-                                    <CheckCircle className="w-5 h-5 mr-1" />
-                                    <span className="text-sm">Lunas</span>
-                                  </div>
-                                ) : partialAmount > 0 ? (
-                                  <div className="text-sm">
-                                    Dibayar: <span className="font-medium">
-                                      {Math.round(partialAmount).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center text-muted-foreground">
-                                    <Circle className="w-5 h-5 mr-1" />
-                                    <span className="text-sm">Belum dibayar</span>
-                                  </div>
-                                )}
-                                
-                                <div className="flex items-center space-x-2">
-                                  <Switch
-                                    checked={isFullyPaid}
-                                    onCheckedChange={(checked) => handlePaymentToggle(expense.id, split.userId, checked)}
-                                  />
-                                  <Label className="text-sm">Lunas</Label>
-                                </div>
-                                
-                                {!isFullyPaid && (
-                                  <div className="flex items-center space-x-2">
-                                    <Input
-                                      type="number"
-                                      placeholder="Jumlah"
-                                      value={partialAmount > 0 ? partialAmount : ''}
-                                      onChange={(e) => handlePartialPayment(expense.id, split.userId, parseFloat(e.target.value) || 0)}
-                                      className="w-24"
-                                      min="0"
-                                      max={split.amount}
-                                      step="1000"
-                                    />
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline"
-                                      onClick={() => {
-                                        if (partialAmount > 0) {
-                                          toast.success(`Pembayaran sebagian untuk ${user.name} berhasil dicatat`);
-                                        }
-                                      }}
-                                    >
-                                      Simpan
-                                    </Button>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
+            
+            <div className="space-y-6">
+              {sortedExpenses.length === 0 ? (
+                <Card>
+                  <CardContent className="text-center py-8">
+                    <p className="text-muted-foreground">Belum ada transaksi yang dicatat</p>
                   </CardContent>
                 </Card>
-              );
-            })
-          )}
-        </div>
+              ) : (
+                sortedExpenses.map(expense => {
+                  const payer = getUserById(expense.paidBy);
+                  
+                  return (
+                    <Card key={expense.id} className="overflow-hidden relative">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute top-2 right-2 h-8 w-8 p-0"
+                        onClick={() => handleDeleteExpense(expense.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      
+                      <CardHeader className="bg-gray-50">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <CardTitle className="text-lg">{expense.description}</CardTitle>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <Badge variant="secondary">{expense.category}</Badge>
+                              <span className="text-sm text-muted-foreground">
+                                {format(new Date(expense.date), 'dd MMM yyyy', { locale: id })}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-lg">
+                              {Math.round(expense.amount).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Dibayar oleh {payer?.name}
+                            </p>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      
+                      <CardContent className="pt-4">
+                        <div className="space-y-4">
+                          <h3 className="font-medium">Status Pembayaran:</h3>
+                          
+                          <div className="space-y-3">
+                            {expense.splits.map(split => {
+                              const user = getUserById(split.userId);
+                              if (!user) return null;
+                              
+                              const paymentStatus = expense.paymentStatus?.[split.userId] || { paid: false };
+                              const isFullyPaid = paymentStatus.paid;
+                              const partialAmount = paymentStatus.partialAmount || 0;
+                              
+                              return (
+                                <div key={`${expense.id}-${split.userId}`} className="flex items-center justify-between p-3 border rounded-lg">
+                                  <div className="flex items-center space-x-3">
+                                    <div 
+                                      className="w-3 h-3 rounded-full" 
+                                      style={{ backgroundColor: user.color }}
+                                    ></div>
+                                    <span className="font-medium">{user.name}</span>
+                                    <span className="text-sm text-muted-foreground">
+                                      ({Math.round(split.amount).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })})
+                                    </span>
+                                  </div>
+                                  
+                                  <div className="flex items-center space-x-4">
+                                    {isFullyPaid ? (
+                                      <div className="flex items-center text-green-600">
+                                        <CheckCircle className="w-5 h-5 mr-1" />
+                                        <span className="text-sm">Lunas</span>
+                                      </div>
+                                    ) : partialAmount > 0 ? (
+                                      <div className="text-sm">
+                                        Dibayar: <span className="font-medium">
+                                          {Math.round(partialAmount).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                        </span>
+                                      </div>
+                                    ) : (
+                                      <div className="flex items-center text-muted-foreground">
+                                        <Circle className="w-5 h-5 mr-1" />
+                                        <span className="text-sm">Belum dibayar</span>
+                                      </div>
+                                    )}
+                                    
+                                    <div className="flex items-center space-x-2">
+                                      <Switch
+                                        checked={isFullyPaid}
+                                        onCheckedChange={(checked) => handlePaymentToggle(expense.id, split.userId, checked)}
+                                      />
+                                      <Label className="text-sm">Lunas</Label>
+                                    </div>
+                                    
+                                    {!isFullyPaid && (
+                                      <div className="flex items-center space-x-2">
+                                        <Input
+                                          type="number"
+                                          placeholder="Jumlah"
+                                          value={partialAmount > 0 ? partialAmount : ''}
+                                          onChange={(e) => handlePartialPayment(expense.id, split.userId, parseFloat(e.target.value) || 0)}
+                                          className="w-24"
+                                          min="0"
+                                          max={split.amount}
+                                          step="1000"
+                                        />
+                                        <Button 
+                                          size="sm" 
+                                          variant="outline"
+                                          onClick={() => {
+                                            if (partialAmount > 0) {
+                                              toast.success(`Pembayaran sebagian untuk ${user.name} berhasil dicatat`);
+                                            }
+                                          }}
+                                        >
+                                          Simpan
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

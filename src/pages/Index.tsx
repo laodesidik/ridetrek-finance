@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { DatabaseService } from '@/services/database';
 
 const Index = () => {
   // Data pengguna awal (6 orang)
@@ -23,15 +24,28 @@ const Index = () => {
   ];
 
   const [users] = useState<User[]>(initialUsers);
-  const [expenses, setExpenses] = useState<Expense[]>(() => {
-    const savedExpenses = localStorage.getItem('expenses');
-    return savedExpenses ? JSON.parse(savedExpenses) : [];
-  });
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Simpan ke localStorage setiap kali expenses berubah
+  // Fetch expenses from database on component mount
   useEffect(() => {
-    localStorage.setItem('expenses', JSON.stringify(expenses));
-  }, [expenses]);
+    const fetchExpenses = async () => {
+      try {
+        const fetchedExpenses = await DatabaseService.fetchTransactions();
+        setExpenses(fetchedExpenses);
+        setError(null);
+      } catch (error) {
+        console.error('Error fetching expenses:', error);
+        setError('Gagal memuat data transaksi');
+        toast.error('Gagal memuat data transaksi');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExpenses();
+  }, []);
 
   // Hitung saldo untuk setiap pengguna
   const calculateBalances = (): Balance[] => {
@@ -61,45 +75,53 @@ const Index = () => {
     return Object.values(balances);
   };
 
-  const handleAddExpense = (expense: Omit<Expense, 'id'>) => {
-    const newExpense: Expense = {
-      ...expense,
-      id: uuidv4()
-    };
-    
-    setExpenses(prev => [...prev, newExpense]);
-    toast.success('Pengeluaran berhasil ditambahkan');
+  const handleAddExpense = async (expense: Omit<Expense, 'id'>) => {
+    try {
+      const newExpense = await DatabaseService.addTransaction(expense);
+      setExpenses(prev => [...prev, newExpense]);
+      toast.success('Pengeluaran berhasil ditambahkan');
+    } catch (error) {
+      console.error('Error adding expense:', error);
+      toast.error('Gagal menambahkan pengeluaran');
+    }
   };
 
-  const handleDeleteExpense = (id: string) => {
-    setExpenses(prev => prev.filter(expense => expense.id !== id));
+  const handleDeleteExpense = async (id: string) => {
+    try {
+      await DatabaseService.deleteTransaction(id);
+      setExpenses(prev => prev.filter(expense => expense.id !== id));
+      toast.success('Transaksi berhasil dihapus');
+    } catch (error) {
+      console.error('Error deleting expense:', error);
+      toast.error('Gagal menghapus transaksi');
+    }
   };
 
-  const handleUpdatePayment = (expenseId: string, userId: string, paid: boolean, partialAmount?: number) => {
-    setExpenses(prev => prev.map(expense => {
-      if (expense.id === expenseId) {
-        const updatedExpense = { ...expense };
+  const handleUpdatePayment = async (expenseId: string, userId: string, paid: boolean, partialAmount?: number) => {
+    try {
+      const updatedExpense = await DatabaseService.updatePaymentStatus(
+        expenseId,
+        userId,
+        paid,
+        partialAmount
+      );
+      
+      if (updatedExpense) {
+        setExpenses(prev => 
+          prev.map(expense => 
+            expense.id === expenseId ? updatedExpense : expense
+          )
+        );
         
-        // Inisialisasi paymentStatus jika belum ada
-        if (!updatedExpense.paymentStatus) {
-          updatedExpense.paymentStatus = {};
+        if (paid) {
+          toast.success('Status pembayaran diperbarui menjadi lunas');
+        } else if (partialAmount && partialAmount > 0) {
+          toast.success('Pembayaran sebagian berhasil dicatat');
         }
-        
-        // Update status pembayaran
-        updatedExpense.paymentStatus[userId] = {
-          paid,
-          partialAmount: paid ? undefined : partialAmount
-        };
-        
-        return updatedExpense;
       }
-      return expense;
-    }));
-    
-    if (paid) {
-      toast.success('Status pembayaran diperbarui menjadi lunas');
-    } else if (partialAmount && partialAmount > 0) {
-      toast.success('Pembayaran sebagian berhasil dicatat');
+    } catch (error) {
+      console.error('Error updating payment status:', error);
+      toast.error('Gagal memperbarui status pembayaran');
     }
   };
 
@@ -119,18 +141,31 @@ const Index = () => {
           </div>
         </div>
         
-        <FinancialSummary expenses={expenses} users={users} />
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-          <div className="lg:col-span-2 space-y-6">
-            <ExpenseForm users={users} onSubmit={handleAddExpense} />
-            <ExpenseList expenses={expenses} users={users} onDelete={handleDeleteExpense} />
+        {loading ? (
+          <div className="flex justify-center items-center h-32">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <span className="ml-2">Memuat data...</span>
           </div>
-          
-          <div className="space-y-6">
-            <UnpaidSummary expenses={expenses} users={users} />
+        ) : error ? (
+          <div className="flex justify-center items-center h-32">
+            <span className="text-red-500">{error}</span>
           </div>
-        </div>
+        ) : (
+          <>
+            <FinancialSummary expenses={expenses} users={users} />
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+              <div className="lg:col-span-2 space-y-6">
+                <ExpenseForm users={users} onSubmit={handleAddExpense} />
+                <ExpenseList expenses={expenses} users={users} onDelete={handleDeleteExpense} />
+              </div>
+              
+              <div className="space-y-6">
+                <UnpaidSummary expenses={expenses} users={users} />
+              </div>
+            </div>
+          </>
+        )}
         
         <MadeWithDyad />
       </div>
