@@ -45,7 +45,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, users, onDelete }) 
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="absolute top-2 right-2 h-8 w-8 p-0"
+                      className="absolute top-4 right-4 h-8 w-8 p-0"
                       onClick={() => {
                         onDelete(expense.id);
                         toast.success('Transaksi berhasil dihapus');
