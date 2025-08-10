@@ -56,7 +56,7 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ expenses, users }) 
         </CardHeader>
         <CardContent>
           <p className="text-2xl font-bold">
-            {totalExpenses.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}
+            {Math.round(totalExpenses).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
           </p>
         </CardContent>
       </Card>
@@ -71,7 +71,7 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ expenses, users }) 
               <div key={category} className="flex justify-between">
                 <span>{category}</span>
                 <span className="font-medium">
-                  {amount.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}
+                  {Math.round(amount).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </span>
               </div>
             ))}

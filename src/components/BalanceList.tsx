@@ -31,7 +31,7 @@ const BalanceList: React.FC<BalanceListProps> = ({ balances }) => {
                 variant={balance.balance >= 0 ? "default" : "destructive"}
                 className="text-sm"
               >
-                {balance.balance >= 0 ? '+' : ''}{balance.balance.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}
+                {balance.balance >= 0 ? '+' : ''}{Math.round(balance.balance).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
               </Badge>
             </div>
           ))}

@@ -79,7 +79,7 @@ const TransactionHistory = () => {
         // Update jumlah pembayaran sebagian
         updatedExpense.paymentStatus[userId] = {
           paid: false,
-          partialAmount: amount
+          partialAmount: Math.round(amount)
         };
         
         return updatedExpense;
@@ -142,7 +142,7 @@ const TransactionHistory = () => {
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-lg">
-                          {expense.amount.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}
+                          {Math.round(expense.amount).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           Dibayar oleh {payer?.name}
@@ -173,7 +173,7 @@ const TransactionHistory = () => {
                                 ></div>
                                 <span className="font-medium">{user.name}</span>
                                 <span className="text-sm text-muted-foreground">
-                                  ({split.amount.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })})
+                                  ({Math.round(split.amount).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })})
                                 </span>
                               </div>
                               
@@ -186,7 +186,7 @@ const TransactionHistory = () => {
                                 ) : partialAmount > 0 ? (
                                   <div className="text-sm">
                                     Dibayar: <span className="font-medium">
-                                      {partialAmount.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}
+                                      {Math.round(partialAmount).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                                     </span>
                                   </div>
                                 ) : (

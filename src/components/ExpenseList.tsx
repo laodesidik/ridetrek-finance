@@ -66,7 +66,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, users, onDelete }) 
                     </div>
                     <div className="text-right">
                       <p className="font-bold">
-                        {expense.amount.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}
+                        {Math.round(expense.amount).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         Dibayar oleh {payer?.name}
@@ -89,7 +89,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, users, onDelete }) 
                           <span>{user.name}</span>
                           {expense.splitType !== 'equal' && (
                             <span className="ml-1">
-                              ({expense.splits.find(s => s.userId === user.id)?.amount.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })})
+                              ({Math.round(expense.splits.find(s => s.userId === user.id)?.amount || 0).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })})
                             </span>
                           )}
                         </div>

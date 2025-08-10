@@ -26,7 +26,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ users, onSubmit }) => {
 
   // Fungsi untuk memformat angka dengan titik pemisah ribuan
   const formatNumber = (num: number) => {
-    return num.toLocaleString('id-ID');
+    return Math.round(num).toLocaleString('id-ID');
   };
 
   // Fungsi untuk menghapus format dan mengembalikan angka
@@ -77,7 +77,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ users, onSubmit }) => {
       const splitAmount = amountValue / selectedUsers.length;
       splits = selectedUsers.map(userId => ({
         userId,
-        amount: splitAmount
+        amount: Math.round(splitAmount)
       }));
     } else if (splitType === 'unequal') {
       // Hitung total dari input pengguna
@@ -92,7 +92,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ users, onSubmit }) => {
             totalSplit += userAmount;
             validSplits.push({
               userId,
-              amount: userAmount
+              amount: Math.round(userAmount)
             });
           }
         }
@@ -108,7 +108,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ users, onSubmit }) => {
     }
     
     onSubmit({
-      amount: amountValue,
+      amount: Math.round(amountValue),
       description,
       category,
       date,

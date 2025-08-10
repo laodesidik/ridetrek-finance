@@ -67,7 +67,7 @@ const UnpaidSummary: React.FC<UnpaidSummaryProps> = ({ expenses, users }) => {
                   </div>
                 ) : (
                   <Badge variant="destructive" className="text-sm">
-                    {unpaidAmount.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}
+                    {Math.round(unpaidAmount).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                   </Badge>
                 )}
               </div>
