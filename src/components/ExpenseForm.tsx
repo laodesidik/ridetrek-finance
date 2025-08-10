@@ -53,19 +53,31 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ users, onSubmit }) => {
         amount: splitAmount
       }));
     } else if (splitType === 'unequal') {
-      const totalSplit = Object.values(unequalAmounts)
-        .filter(id => selectedUsers.includes(id))
-        .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+      // Hitung total dari input pengguna
+      let totalSplit = 0;
+      const validSplits: { userId: string; amount: number }[] = [];
       
+      selectedUsers.forEach(userId => {
+        const userAmountStr = unequalAmounts[userId];
+        if (userAmountStr !== undefined && userAmountStr !== '') {
+          const userAmount = parseFloat(userAmountStr);
+          if (!isNaN(userAmount) && userAmount >= 0) {
+            totalSplit += userAmount;
+            validSplits.push({
+              userId,
+              amount: userAmount
+            });
+          }
+        }
+      });
+      
+      // Validasi total pembagian
       if (Math.abs(totalSplit - amountValue) > 0.01) {
-        toast.error('Total pembagian tidak sesuai dengan jumlah pengeluaran');
+        toast.error(`Total pembagian (${totalSplit.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}) tidak sesuai dengan jumlah pengeluaran (${amountValue.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })})`);
         return;
       }
       
-      splits = selectedUsers.map(userId => ({
-        userId,
-        amount: parseFloat(unequalAmounts[userId]) || 0
-      }));
+      splits = validSplits;
     } else {
       // specific - hanya satu orang
       splits = [{
@@ -107,6 +119,18 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ users, onSubmit }) => {
         ? prev.filter(id => id !== userId) 
         : [...prev, userId]
     );
+  };
+
+  // Fungsi untuk menghitung total pembagian tidak rata
+  const calculateUnequalTotal = () => {
+    return selectedUsers.reduce((total, userId) => {
+      const amountStr = unequalAmounts[userId];
+      if (amountStr && amountStr !== '') {
+        const amount = parseFloat(amountStr);
+        return isNaN(amount) ? total : total + amount;
+      }
+      return total;
+    }, 0);
   };
 
   return (
@@ -275,6 +299,10 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ users, onSubmit }) => {
                     </div>
                   );
                 })}
+              </div>
+              <div className="text-sm text-muted-foreground mt-2">
+                Total pembagian: {calculateUnequalTotal().toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}
+                {amount && ` / ${parseFloat(amount).toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}`}
               </div>
             </div>
           )}
