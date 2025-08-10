@@ -5,13 +5,17 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import PaymentProgress from '@/components/PaymentProgress';
+import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface ExpenseListProps {
   expenses: Expense[];
   users: User[];
+  onDelete?: (id: string) => void;
 }
 
-const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, users }) => {
+const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, users, onDelete }) => {
   const getUserById = (id: string) => users.find(user => user.id === id);
   
   // Urutkan berdasarkan tanggal terbaru
@@ -36,7 +40,20 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, users }) => {
               const participants = expense.splits.map(split => getUserById(split.userId)).filter(Boolean) as User[];
               
               return (
-                <div key={expense.id} className="border rounded-lg p-4">
+                <div key={expense.id} className="border rounded-lg p-4 relative">
+                  {onDelete && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="absolute top-2 right-2 h-8 w-8 p-0"
+                      onClick={() => {
+                        onDelete(expense.id);
+                        toast.success('Transaksi berhasil dihapus');
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-medium">{expense.description}</h3>

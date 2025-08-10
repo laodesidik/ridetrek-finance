@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { toast } from 'sonner';
-import { CheckCircle, Circle } from 'lucide-react';
+import { CheckCircle, Circle, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const TransactionHistory = () => {
@@ -88,6 +88,11 @@ const TransactionHistory = () => {
     }));
   };
 
+  const handleDeleteExpense = (id: string) => {
+    setExpenses(prev => prev.filter(expense => expense.id !== id));
+    toast.success('Transaksi berhasil dihapus');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4 max-w-6xl">
@@ -114,7 +119,16 @@ const TransactionHistory = () => {
               const payer = getUserById(expense.paidBy);
               
               return (
-                <Card key={expense.id} className="overflow-hidden">
+                <Card key={expense.id} className="overflow-hidden relative">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute top-2 right-2 h-8 w-8 p-0"
+                    onClick={() => handleDeleteExpense(expense.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                  
                   <CardHeader className="bg-gray-50">
                     <div className="flex justify-between items-start">
                       <div>
