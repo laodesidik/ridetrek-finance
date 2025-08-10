@@ -34,13 +34,21 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ users, onSubmit }) => {
     return parseFloat(str.replace(/\./g, '').replace(',', '.'));
   };
 
+  // Fungsi untuk menambahkan titik pemisah ribuan saat mengetik
+  const formatInputNumber = (value: string) => {
+    // Hapus semua karakter non-digit
+    const digits = value.replace(/\D/g, '');
+    
+    // Format dengan titik pemisah ribuan
+    return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
+
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     
-    // Hanya izinkan angka dan titik
-    if (value === '' || /^\d*\.?\d*$/.test(value)) {
-      setAmount(value);
-    }
+    // Format input dengan titik pemisah ribuan
+    const formattedValue = formatInputNumber(value);
+    setAmount(formattedValue);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -310,13 +318,12 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ users, onSubmit }) => {
                         value={unequalAmounts[userId] || ''}
                         onChange={(e) => {
                           const value = e.target.value;
-                          // Hanya izinkan angka dan titik
-                          if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                            setUnequalAmounts(prev => ({
-                              ...prev,
-                              [userId]: value
-                            }));
-                          }
+                          // Format input dengan titik pemisah ribuan
+                          const formattedValue = formatInputNumber(value);
+                          setUnequalAmounts(prev => ({
+                            ...prev,
+                            [userId]: formattedValue
+                          }));
                         }}
                         className="flex-1 text-right"
                       />
