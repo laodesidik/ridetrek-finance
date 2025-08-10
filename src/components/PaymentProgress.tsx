@@ -34,7 +34,7 @@ const PaymentProgress: React.FC<PaymentProgressProps> = ({ expense }) => {
       </div>
       <Progress 
         value={progress} 
-        className={isFullyPaid ? "bg-green-500" : "bg-orange-500"} 
+        className={isFullyPaid ? "[&>div]:bg-green-500" : "[&>div]:bg-orange-500"} 
       />
     </div>
   );
