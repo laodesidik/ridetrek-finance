@@ -24,6 +24,25 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ users, onSubmit }) => {
   const [selectedUsers, setSelectedUsers] = useState<string[]>(users.map(u => u.id));
   const [unequalAmounts, setUnequalAmounts] = useState<Record<string, string>>({});
 
+  // Fungsi untuk memformat angka dengan titik pemisah ribuan
+  const formatNumber = (num: number) => {
+    return num.toLocaleString('id-ID');
+  };
+
+  // Fungsi untuk menghapus format dan mengembalikan angka
+  const parseNumber = (str: string) => {
+    return parseFloat(str.replace(/\./g, '').replace(',', '.'));
+  };
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    
+    // Hanya izinkan angka dan titik
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      setAmount(value);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -32,7 +51,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ users, onSubmit }) => {
       return;
     }
     
-    const amountValue = parseFloat(amount);
+    const amountValue = parseNumber(amount);
     if (isNaN(amountValue) || amountValue <= 0) {
       toast.error('Jumlah pengeluaran tidak valid');
       return;
@@ -60,7 +79,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ users, onSubmit }) => {
       selectedUsers.forEach(userId => {
         const userAmountStr = unequalAmounts[userId];
         if (userAmountStr !== undefined && userAmountStr !== '') {
-          const userAmount = parseFloat(userAmountStr);
+          const userAmount = parseNumber(userAmountStr);
           if (!isNaN(userAmount) && userAmount >= 0) {
             totalSplit += userAmount;
             validSplits.push({
@@ -73,7 +92,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ users, onSubmit }) => {
       
       // Validasi total pembagian
       if (Math.abs(totalSplit - amountValue) > 0.01) {
-        toast.error(`Total pembagian (${totalSplit.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}) tidak sesuai dengan jumlah pengeluaran (${amountValue.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })})`);
+        toast.error(`Total pembagian (${formatNumber(totalSplit)} IDR) tidak sesuai dengan jumlah pengeluaran (${formatNumber(amountValue)} IDR)`);
         return;
       }
       
@@ -126,7 +145,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ users, onSubmit }) => {
     return selectedUsers.reduce((total, userId) => {
       const amountStr = unequalAmounts[userId];
       if (amountStr && amountStr !== '') {
-        const amount = parseFloat(amountStr);
+        const amount = parseNumber(amountStr);
         return isNaN(amount) ? total : total + amount;
       }
       return total;
@@ -145,13 +164,14 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ users, onSubmit }) => {
               <Label htmlFor="amount">Jumlah (IDR)</Label>
               <Input
                 id="amount"
-                type="number"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={handleAmountChange}
                 placeholder="0"
-                min="0"
-                step="1000"
+                className="text-right"
               />
+              <div className="text-sm text-muted-foreground">
+                Format: x.xxx.xxx
+              </div>
             </div>
             
             <div className="space-y-2">
@@ -285,24 +305,28 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ users, onSubmit }) => {
                       ></div>
                       <span className="text-sm w-20 truncate">{user.name}</span>
                       <Input
-                        type="number"
+                        type="text"
                         placeholder="0"
                         value={unequalAmounts[userId] || ''}
-                        onChange={(e) => setUnequalAmounts(prev => ({
-                          ...prev,
-                          [userId]: e.target.value
-                        }))}
-                        className="flex-1"
-                        min="0"
-                        step="1000"
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          // Hanya izinkan angka dan titik
+                          if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                            setUnequalAmounts(prev => ({
+                              ...prev,
+                              [userId]: value
+                            }));
+                          }
+                        }}
+                        className="flex-1 text-right"
                       />
                     </div>
                   );
                 })}
               </div>
               <div className="text-sm text-muted-foreground mt-2">
-                Total pembagian: {calculateUnequalTotal().toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}
-                {amount && ` / ${parseFloat(amount).toLocaleString('id-ID', { style: 'currency', currency: 'IDR' })}`}
+                Total pembagian: {formatNumber(calculateUnequalTotal())} IDR
+                {amount && ` / ${formatNumber(parseNumber(amount))} IDR`}
               </div>
             </div>
           )}
