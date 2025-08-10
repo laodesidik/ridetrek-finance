@@ -177,9 +177,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ users, onSubmit }) => {
                 placeholder="0"
                 className="text-right"
               />
-              <div className="text-sm text-muted-foreground">
-                Format: x.xxx.xxx
-              </div>
             </div>
             
             <div className="space-y-2">
