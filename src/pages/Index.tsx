@@ -9,15 +9,14 @@ import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 
 const Index = () => {
-  // Data pengguna awal (7 orang termasuk Anda)
+  // Data pengguna awal (6 orang)
   const initialUsers: User[] = [
-    { id: '1', name: 'Anda', color: '#3b82f6' },
-    { id: '2', name: 'Budi', color: '#ef4444' },
-    { id: '3', name: 'Citra', color: '#10b981' },
-    { id: '4', name: 'Dewi', color: '#f59e0b' },
-    { id: '5', name: 'Eko', color: '#8b5cf6' },
-    { id: '6', name: 'Fina', color: '#ec4899' },
-    { id: '7', name: 'Gani', color: '#06b6d4' },
+    { id: '1', name: 'Laode', color: '#3b82f6' },
+    { id: '2', name: 'Frankie', color: '#ef4444' },
+    { id: '3', name: 'Rasad', color: '#10b981' },
+    { id: '4', name: 'Fajar', color: '#f59e0b' },
+    { id: '5', name: 'Panji', color: '#8b5cf6' },
+    { id: '6', name: 'Jerry', color: '#ec4899' },
   ];
 
   const [users] = useState<User[]>(initialUsers);
