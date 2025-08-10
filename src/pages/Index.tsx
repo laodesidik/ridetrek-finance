@@ -4,6 +4,7 @@ import ExpenseForm from '@/components/ExpenseForm';
 import ExpenseList from '@/components/ExpenseList';
 import BalanceList from '@/components/BalanceList';
 import FinancialSummary from '@/components/FinancialSummary';
+import UnpaidSummary from '@/components/UnpaidSummary';
 import { MadeWithDyad } from '@/components/made-with-dyad';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
@@ -123,7 +124,7 @@ const Index = () => {
           </div>
           
           <div className="space-y-6">
-            {/* Ringkasan saldo telah dihapus dari sini */}
+            <UnpaidSummary expenses={expenses} users={users} />
           </div>
         </div>
         

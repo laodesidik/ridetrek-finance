@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
+import PaymentProgress from '@/components/PaymentProgress';
 
 interface ExpenseListProps {
   expenses: Expense[];
@@ -78,6 +79,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, users }) => {
                       ))}
                     </div>
                   </div>
+                  
+                  <PaymentProgress expense={expense} />
                 </div>
               );
             })
