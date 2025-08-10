@@ -49,7 +49,7 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ expenses, users }) 
   }));
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <Card>
         <CardHeader>
           <CardTitle>Total Pengeluaran</CardTitle>
@@ -75,34 +75,6 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ expenses, users }) 
                 </span>
               </div>
             ))}
-          </div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Ringkasan Saldo</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Positif</span>
-              <span className="font-medium text-green-600">
-                {balances.filter(b => b.balance > 0).length} orang
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Negatif</span>
-              <span className="font-medium text-red-600">
-                {balances.filter(b => b.balance < 0).length} orang
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Seimbang</span>
-              <span className="font-medium">
-                {balances.filter(b => b.balance === 0).length} orang
-              </span>
-            </div>
           </div>
         </CardContent>
       </Card>
