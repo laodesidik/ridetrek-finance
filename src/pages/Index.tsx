@@ -123,7 +123,7 @@ const Index = () => {
           </div>
           
           <div className="space-y-6">
-            <BalanceList balances={balances} />
+            {/* Ringkasan saldo telah dihapus dari sini */}
           </div>
         </div>
         
