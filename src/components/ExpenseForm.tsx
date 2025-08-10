@@ -20,7 +20,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ users, onSubmit }) => {
   const [category, setCategory] = useState<Category>('Makan');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [paidBy, setPaidBy] = useState(users[0]?.id || '');
-  const [splitType, setSplitType] = useState<'equal' | 'unequal' | 'specific'>('equal');
+  const [splitType, setSplitType] = useState<'equal' | 'unequal'>('equal');
   const [selectedUsers, setSelectedUsers] = useState<string[]>(users.map(u => u.id));
   const [unequalAmounts, setUnequalAmounts] = useState<Record<string, string>>({});
 
@@ -105,12 +105,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ users, onSubmit }) => {
       }
       
       splits = validSplits;
-    } else {
-      // specific - hanya satu orang
-      splits = [{
-        userId: selectedUsers[0],
-        amount: amountValue
-      }];
     }
     
     onSubmit({
@@ -135,12 +129,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ users, onSubmit }) => {
   };
 
   const handleUserToggle = (userId: string) => {
-    if (splitType === 'specific') {
-      // Hanya satu orang yang bisa dipilih untuk tipe specific
-      setSelectedUsers([userId]);
-      return;
-    }
-    
     setSelectedUsers(prev => 
       prev.includes(userId) 
         ? prev.filter(id => id !== userId) 
@@ -255,14 +243,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ users, onSubmit }) => {
                 size="sm"
               >
                 Tidak Rata
-              </Button>
-              <Button
-                type="button"
-                variant={splitType === 'specific' ? 'default' : 'outline'}
-                onClick={() => setSplitType('specific')}
-                size="sm"
-              >
-                Spesifik
               </Button>
             </div>
           </div>
