@@ -18,6 +18,13 @@ export interface Expense {
     userId: string;
     amount: number;
   }[];
+  // Status pembayaran untuk setiap pengguna
+  paymentStatus?: {
+    [userId: string]: {
+      paid: boolean;
+      partialAmount?: number;
+    };
+  };
 }
 
 export interface Balance {

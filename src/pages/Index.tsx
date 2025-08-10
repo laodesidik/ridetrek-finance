@@ -7,6 +7,8 @@ import FinancialSummary from '@/components/FinancialSummary';
 import { MadeWithDyad } from '@/components/made-with-dyad';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 const Index = () => {
   // Data pengguna awal (6 orang)
@@ -68,6 +70,34 @@ const Index = () => {
     toast.success('Pengeluaran berhasil ditambahkan');
   };
 
+  const handleUpdatePayment = (expenseId: string, userId: string, paid: boolean, partialAmount?: number) => {
+    setExpenses(prev => prev.map(expense => {
+      if (expense.id === expenseId) {
+        const updatedExpense = { ...expense };
+        
+        // Inisialisasi paymentStatus jika belum ada
+        if (!updatedExpense.paymentStatus) {
+          updatedExpense.paymentStatus = {};
+        }
+        
+        // Update status pembayaran
+        updatedExpense.paymentStatus[userId] = {
+          paid,
+          partialAmount: paid ? undefined : partialAmount
+        };
+        
+        return updatedExpense;
+      }
+      return expense;
+    }));
+    
+    if (paid) {
+      toast.success('Status pembayaran diperbarui menjadi lunas');
+    } else if (partialAmount && partialAmount > 0) {
+      toast.success('Pembayaran sebagian berhasil dicatat');
+    }
+  };
+
   const balances = calculateBalances();
 
   return (
@@ -76,6 +106,12 @@ const Index = () => {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Pencatatan Keuangan Perjalanan</h1>
           <p className="text-gray-600">Catat dan kelola pengeluaran bersama teman-teman</p>
+          
+          <div className="mt-4">
+            <Link to="/transactions">
+              <Button variant="outline">Lihat Riwayat Transaksi</Button>
+            </Link>
+          </div>
         </div>
         
         <FinancialSummary expenses={expenses} users={users} />
