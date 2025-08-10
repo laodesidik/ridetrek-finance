@@ -12,12 +12,6 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ expenses, users }) 
   // Hitung total pengeluaran
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   
-  // Hitung pengeluaran per kategori
-  const categoryTotals = expenses.reduce((acc, expense) => {
-    acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
-    return acc;
-  }, {} as Record<string, number>);
-  
   // Hitung pengeluaran per orang
   const userTotals = users.reduce((acc, user) => {
     acc[user.id] = {
@@ -58,24 +52,6 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({ expenses, users }) 
           <p className="text-2xl font-bold">
             {Math.round(totalExpenses).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
           </p>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Pengeluaran per Kategori</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {Object.entries(categoryTotals).map(([category, amount]) => (
-              <div key={category} className="flex justify-between">
-                <span>{category}</span>
-                <span className="font-medium">
-                  {Math.round(amount).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                </span>
-              </div>
-            ))}
-          </div>
         </CardContent>
       </Card>
     </div>
