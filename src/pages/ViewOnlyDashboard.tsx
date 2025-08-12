@@ -10,6 +10,11 @@ const ViewOnlyDashboard = () => {
             Anda memiliki akses terbatas — transaksi hanya dapat dilihat (read-only)
           </p>
         </div>
+        <div className="mt-4 text-center text-sm text-gray-500">
+                    <Link to="/public/transactions" className="text-blue-600 hover:underline">
+                      Kembali ke halaman utama
+                    </Link>
+                  </div>
         <Index isAdmin={false} />
       </div>
     </div>
