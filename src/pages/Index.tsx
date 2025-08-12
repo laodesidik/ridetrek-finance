@@ -11,8 +11,12 @@ import { v4 as uuidv4 } from 'uuid';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DatabaseService } from '@/services/database';
+import { useAuth } from '@/contexts/AuthContext';
 
-const Index = () => {
+const Index = ({ isAdmin: propIsAdmin }: { isAdmin?: boolean }) => {
+  const { isAdmin: contextIsAdmin } = useAuth();
+  const effectiveIsAdmin = propIsAdmin !== undefined ? propIsAdmin : contextIsAdmin;
+  
   // Data pengguna awal (6 orang)
   const initialUsers: User[] = [
     { id: '1', name: 'Laode', color: '#3b82f6' },
@@ -153,11 +157,11 @@ const Index = () => {
         ) : (
           <>
             <FinancialSummary expenses={expenses} users={users} />
-            
+        
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
               <div className="lg:col-span-2 space-y-6">
-                <ExpenseForm users={users} onSubmit={handleAddExpense} />
-                <ExpenseList expenses={expenses} users={users} onDelete={handleDeleteExpense} />
+                {effectiveIsAdmin && <ExpenseForm users={users} onSubmit={handleAddExpense} />}
+                <ExpenseList expenses={expenses} users={users} onDelete={effectiveIsAdmin ? handleDeleteExpense : undefined} />
               </div>
               
               <div className="space-y-6">

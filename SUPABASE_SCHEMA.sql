@@ -28,10 +28,10 @@ create policy "admin full access" on transactions
   using (auth.jwt() ->> 'user_metadata' ->> 'role' = 'admin')
   with check (auth.jwt() ->> 'user_metadata' ->> 'role' = 'admin');
 
--- Create policy to allow admins to read all transactions
-create policy "admin can read all transactions" on transactions
+-- Create policy to allow anyone to read transactions (for public page)
+create policy "anyone can read transactions" on transactions
   for select
-  using (auth.jwt() ->> 'user_metadata' ->> 'role' = 'admin');
+  using (true);
 
 -- Create policy to allow admins to insert transactions
 create policy "admin can insert transactions" on transactions

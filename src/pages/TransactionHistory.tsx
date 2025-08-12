@@ -14,8 +14,9 @@ import { Link } from 'react-router-dom';
 import { DatabaseService } from '@/services/database';
 import { useAuth } from '@/contexts/AuthContext';
 
-const TransactionHistory = () => {
-  const { isAdmin } = useAuth();
+const TransactionHistory = ({ isAdmin: propIsAdmin }: { isAdmin?: boolean }) => {
+  const { isAdmin: contextIsAdmin } = useAuth();
+  const effectiveIsAdmin = propIsAdmin !== undefined ? propIsAdmin : contextIsAdmin;
 
   const users: User[] = [
     { id: '1', name: 'Laode', color: '#3b82f6' },
@@ -175,7 +176,7 @@ const TransactionHistory = () => {
 
                   return (
                     <Card key={expense.id} className="overflow-hidden relative">
-                      {isAdmin && (
+                      {effectiveIsAdmin && (
                         <Button
                           variant="destructive"
                           size="sm"
@@ -272,7 +273,7 @@ const TransactionHistory = () => {
                                       </div>
                                     )}
 
-                                    {isAdmin ? (
+                                    {effectiveIsAdmin ? (
                                       <div className="flex items-center space-x-2">
                                         <Switch
                                           checked={isFullyPaid}

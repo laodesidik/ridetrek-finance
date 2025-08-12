@@ -1,17 +1,24 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isAdmin, isLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    if (!isLoading && (!user || !isAdmin)) {
+    if (!isLoading && !user) {
       navigate('/login');
+      return;
     }
-  }, [user, isAdmin, isLoading, navigate]);
+
+    // Redirect non-admin users from dashboard to view-only dashboard
+    if (location.pathname === '/dashboard' && user && !isAdmin) {
+      navigate('/view-only-dashboard');
+    }
+  }, [user, isAdmin, isLoading, navigate, location.pathname]);
 
   if (isLoading) {
     return (
@@ -21,7 +28,14 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  if (!user || !isAdmin) {
+  // For transactions page, only allow admin users
+  if (location.pathname === '/transactions' && (!user || !isAdmin)) {
+    navigate('/view-only-dashboard');
+    return null;
+  }
+
+  // Allow authenticated users to access view-only dashboard and transactions page
+  if (!user) {
     return null;
   }
 
