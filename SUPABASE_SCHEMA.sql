@@ -19,11 +19,38 @@ create index idx_transactions_paid_by on transactions(paid_by);
 create index idx_transactions_category on transactions(category);
 
 -- Set up Row Level Security (RLS)
--- NOTE: For demo purposes, we're disabling RLS. In production, you should enable and configure it properly
--- alter table transactions enable row level security;
+-- Enable RLS for the transactions table
+alter table transactions enable row level security;
 
--- For demo purposes, we're allowing all operations without authentication
--- In a real application, you would implement proper authentication and authorization
+-- Create policy for admin full access
+create policy "admin full access" on transactions
+  for all
+  using (auth.jwt() ->> 'user_metadata' ->> 'role' = 'admin')
+  with check (auth.jwt() ->> 'user_metadata' ->> 'role' = 'admin');
+
+-- Create policy to allow admins to read all transactions
+create policy "admin can read all transactions" on transactions
+  for select
+  using (auth.jwt() ->> 'user_metadata' ->> 'role' = 'admin');
+
+-- Create policy to allow admins to insert transactions
+create policy "admin can insert transactions" on transactions
+  for insert
+  with check (auth.jwt() ->> 'user_metadata' ->> 'role' = 'admin');
+
+-- Create policy to allow admins to update transactions
+create policy "admin can update transactions" on transactions
+  for update
+  using (auth.jwt() ->> 'user_metadata' ->> 'role' = 'admin')
+  with check (auth.jwt() ->> 'user_metadata' ->> 'role' = 'admin');
+
+-- Create policy to allow admins to delete transactions
+create policy "admin can delete transactions" on transactions
+  for delete
+  using (auth.jwt() ->> 'user_metadata' ->> 'role' = 'admin');
+
+-- RLS is now enabled with admin-only access policies
+-- Only users with role 'admin' in their user_metadata can access transactions
 
 -- Function to update updated_at timestamp
 create or replace function update_updated_at_column()

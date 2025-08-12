@@ -12,9 +12,11 @@ import { toast } from 'sonner';
 import { CheckCircle, Circle, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { DatabaseService } from '@/services/database';
+import { useAuth } from '@/contexts/AuthContext';
 
 const TransactionHistory = () => {
-  // Data pengguna awal (6 orang)
+  const { isAdmin } = useAuth();
+
   const users: User[] = [
     { id: '1', name: 'Laode', color: '#3b82f6' },
     { id: '2', name: 'Frankie', color: '#ef4444' },
@@ -28,7 +30,6 @@ const TransactionHistory = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch expenses from database on component mount
   useEffect(() => {
     const fetchExpenses = async () => {
       try {
@@ -48,13 +49,11 @@ const TransactionHistory = () => {
   }, []);
 
   const getUserById = (id: string) => users.find(user => user.id === id);
-  
-  // Urutkan berdasarkan tanggal terbaru
-  const sortedExpenses = [...expenses].sort((a, b) => 
-    new Date(b.date).getTime() - new Date(a.date).getTime()
+
+  const sortedExpenses = [...expenses].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  // Hitung pengeluaran per kategori
   const categoryTotals = expenses.reduce((acc, expense) => {
     acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
     return acc;
@@ -62,19 +61,15 @@ const TransactionHistory = () => {
 
   const handlePaymentToggle = async (expenseId: string, userId: string, paid: boolean) => {
     try {
-      const updatedExpense = await DatabaseService.updatePaymentStatus(
-        expenseId,
-        userId,
-        paid
-      );
-      
+      const updatedExpense = await DatabaseService.updatePaymentStatus(expenseId, userId, paid);
+
       if (updatedExpense) {
-        setExpenses(prev => 
-          prev.map(expense => 
+        setExpenses(prev =>
+          prev.map(expense =>
             expense.id === expenseId ? updatedExpense : expense
           )
         );
-        
+
         if (paid) {
           toast.success('Status pembayaran diperbarui menjadi lunas');
         }
@@ -93,10 +88,10 @@ const TransactionHistory = () => {
         false,
         Math.round(amount)
       );
-      
+
       if (updatedExpense) {
-        setExpenses(prev => 
-          prev.map(expense => 
+        setExpenses(prev =>
+          prev.map(expense =>
             expense.id === expenseId ? updatedExpense : expense
           )
         );
@@ -124,14 +119,14 @@ const TransactionHistory = () => {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Riwayat Transaksi</h1>
           <p className="text-gray-600">Kelola status pembayaran untuk setiap transaksi</p>
-          
+
           <div className="mt-4">
             <Link to="/">
               <Button variant="outline">Kembali ke Dashboard</Button>
             </Link>
           </div>
         </div>
-        
+
         {loading ? (
           <div className="flex justify-center items-center h-32">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
@@ -154,14 +149,19 @@ const TransactionHistory = () => {
                     <div key={category} className="flex justify-between">
                       <span>{category}</span>
                       <span className="font-medium">
-                        {Math.round(amount).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                        {Math.round(amount).toLocaleString('id-ID', {
+                          style: 'currency',
+                          currency: 'IDR',
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0
+                        })}
                       </span>
                     </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
-            
+
             <div className="space-y-6">
               {sortedExpenses.length === 0 ? (
                 <Card>
@@ -172,18 +172,20 @@ const TransactionHistory = () => {
               ) : (
                 sortedExpenses.map(expense => {
                   const payer = getUserById(expense.paidBy);
-                  
+
                   return (
                     <Card key={expense.id} className="overflow-hidden relative">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="absolute top-2 right-2 h-8 w-8 p-0"
-                        onClick={() => handleDeleteExpense(expense.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                      
+                      {isAdmin && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteExpense(expense.id)}
+                          className="absolute top-2 right-2 h-8 w-8 p-0"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+
                       <CardHeader className="bg-gray-50">
                         <div className="flex justify-between items-start">
                           <div>
@@ -197,7 +199,12 @@ const TransactionHistory = () => {
                           </div>
                           <div className="text-right">
                             <p className="font-bold text-lg">
-                              {Math.round(expense.amount).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                              {Math.round(expense.amount).toLocaleString('id-ID', {
+                                style: 'currency',
+                                currency: 'IDR',
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 0
+                              })}
                             </p>
                             <p className="text-sm text-muted-foreground">
                               Dibayar oleh {payer?.name}
@@ -205,33 +212,41 @@ const TransactionHistory = () => {
                           </div>
                         </div>
                       </CardHeader>
-                      
+
                       <CardContent className="pt-4">
                         <div className="space-y-4">
                           <h3 className="font-medium">Status Pembayaran:</h3>
-                          
+
                           <div className="space-y-3">
                             {expense.splits.map(split => {
                               const user = getUserById(split.userId);
                               if (!user) return null;
-                              
+
                               const paymentStatus = expense.paymentStatus?.[split.userId] || { paid: false };
                               const isFullyPaid = paymentStatus.paid;
                               const partialAmount = paymentStatus.partialAmount || 0;
-                              
+
                               return (
-                                <div key={`${expense.id}-${split.userId}`} className="flex items-center justify-between p-3 border rounded-lg">
+                                <div
+                                  key={`${expense.id}-${split.userId}`}
+                                  className="flex items-center justify-between p-3 border rounded-lg"
+                                >
                                   <div className="flex items-center space-x-3">
-                                    <div 
-                                      className="w-3 h-3 rounded-full" 
+                                    <div
+                                      className="w-3 h-3 rounded-full"
                                       style={{ backgroundColor: user.color }}
                                     ></div>
                                     <span className="font-medium">{user.name}</span>
                                     <span className="text-sm text-muted-foreground">
-                                      ({Math.round(split.amount).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })})
+                                      ({Math.round(split.amount).toLocaleString('id-ID', {
+                                        style: 'currency',
+                                        currency: 'IDR',
+                                        minimumFractionDigits: 0,
+                                        maximumFractionDigits: 0
+                                      })})
                                     </span>
                                   </div>
-                                  
+
                                   <div className="flex items-center space-x-4">
                                     {isFullyPaid ? (
                                       <div className="flex items-center text-green-600">
@@ -240,8 +255,14 @@ const TransactionHistory = () => {
                                       </div>
                                     ) : partialAmount > 0 ? (
                                       <div className="text-sm">
-                                        Dibayar: <span className="font-medium">
-                                          {Math.round(partialAmount).toLocaleString('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                        Dibayar:{' '}
+                                        <span className="font-medium">
+                                          {Math.round(partialAmount).toLocaleString('id-ID', {
+                                            style: 'currency',
+                                            currency: 'IDR',
+                                            minimumFractionDigits: 0,
+                                            maximumFractionDigits: 0
+                                          })}
                                         </span>
                                       </div>
                                     ) : (
@@ -250,33 +271,50 @@ const TransactionHistory = () => {
                                         <span className="text-sm">Belum dibayar</span>
                                       </div>
                                     )}
-                                    
-                                    <div className="flex items-center space-x-2">
-                                      <Switch
-                                        checked={isFullyPaid}
-                                        onCheckedChange={(checked) => handlePaymentToggle(expense.id, split.userId, checked)}
-                                      />
-                                      <Label className="text-sm">Lunas</Label>
-                                    </div>
-                                    
+
+                                    {isAdmin ? (
+                                      <div className="flex items-center space-x-2">
+                                        <Switch
+                                          checked={isFullyPaid}
+                                          onCheckedChange={checked =>
+                                            handlePaymentToggle(expense.id, split.userId, checked)
+                                          }
+                                        />
+                                        <Label className="text-sm">Lunas</Label>
+                                      </div>
+                                    ) : (
+                                      <div className="flex items-center space-x-2 opacity-50">
+                                        <Switch checked={isFullyPaid} disabled />
+                                        <Label className="text-sm">Lunas</Label>
+                                      </div>
+                                    )}
+
                                     {!isFullyPaid && (
                                       <div className="flex items-center space-x-2">
                                         <Input
                                           type="number"
                                           placeholder="Jumlah"
                                           value={partialAmount > 0 ? partialAmount : ''}
-                                          onChange={(e) => handlePartialPayment(expense.id, split.userId, parseFloat(e.target.value) || 0)}
+                                          onChange={e =>
+                                            handlePartialPayment(
+                                              expense.id,
+                                              split.userId,
+                                              parseFloat(e.target.value) || 0
+                                            )
+                                          }
                                           className="w-24"
                                           min="0"
                                           max={split.amount}
                                           step="1000"
                                         />
-                                        <Button 
-                                          size="sm" 
+                                        <Button
+                                          size="sm"
                                           variant="outline"
                                           onClick={() => {
                                             if (partialAmount > 0) {
-                                              toast.success(`Pembayaran sebagian untuk ${user.name} berhasil dicatat`);
+                                              toast.success(
+                                                `Pembayaran sebagian untuk ${user.name} berhasil dicatat`
+                                              );
                                             }
                                           }}
                                         >

@@ -36,6 +36,10 @@ VITE_SUPABASE_ANON_KEY=your-anon-key-here
 For production use, you should:
 1. Re-enable Row Level Security (RLS) policies
 2. Set up Supabase Auth for user authentication
+
+## Admin User Setup
+
+Refer to [SUPABASE_ADMIN_SETUP.md](SUPABASE_ADMIN_SETUP.md) for instructions on creating the admin user with the proper role.
 3. Configure proper RLS policies based on authenticated users
 4. Review and adjust the database policies as needed for your application's requirements
 
