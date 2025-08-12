@@ -49,7 +49,7 @@ const Login = () => {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Login Admin</CardTitle>
           <CardDescription className="text-center">
-            Masuk ke dashboard administrasi RideTrek Finance
+            Admin Dashboard
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -70,7 +70,7 @@ const Login = () => {
               <Input
                 id="password"
                 type="password"
-                placeholder="rideonom6"
+                placeholder="xxxxx"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -81,7 +81,7 @@ const Login = () => {
             </Button>
           </form>
           <div className="mt-4 text-center text-sm text-gray-500">
-            <Link to="/" className="text-blue-600 hover:underline">
+            <Link to="/public/transactions" className="text-blue-600 hover:underline">
               Kembali ke halaman utama
             </Link>
           </div>
