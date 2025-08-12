@@ -4,6 +4,7 @@ import { id } from 'date-fns/locale';
 import { CheckCircle, MinusCircle } from 'lucide-react';
 import { DatabaseService } from '@/services/database';
 import { Expense, User } from '@/types';
+import { Link } from 'react-router-dom';
 
 const PublicTransactionsPage = () => {
   const users: User[] = [
@@ -97,7 +98,10 @@ const PublicTransactionsPage = () => {
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Ridetrek - Finance</h1>
-          <p className="text-gray-600">Pencatatan Pengeluaran KOMA 6</p>
+          <p className="text-gray-600 mb-4">Pencatatan Pengeluaran KOMA 6</p>
+          <Link to="/login" className="inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Login Admin
+          </Link>
         </div>
 
         {/* Summary Section per Person */}
