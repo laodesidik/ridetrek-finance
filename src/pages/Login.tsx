@@ -59,7 +59,7 @@ const Login = () => {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@ridetrek.local"
+                placeholder="masukkan email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
